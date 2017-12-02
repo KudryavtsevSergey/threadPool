@@ -1,0 +1,7 @@
+E:\Работы\СПП\lab6\lab6\bin\Debug\lab6.exe.config
+E:\Работы\СПП\lab6\lab6\bin\Debug\lab6.exe
+E:\Работы\СПП\lab6\lab6\bin\Debug\lab6.pdb
+E:\Работы\СПП\lab6\lab6\obj\Debug\lab6.csprojResolveAssemblyReference.cache
+E:\Работы\СПП\lab6\lab6\obj\Debug\lab6.csproj.CoreCompileInputs.cache
+E:\Работы\СПП\lab6\lab6\obj\Debug\lab6.exe
+E:\Работы\СПП\lab6\lab6\obj\Debug\lab6.pdb

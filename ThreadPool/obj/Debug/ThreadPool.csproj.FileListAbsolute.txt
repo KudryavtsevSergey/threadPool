@@ -1,0 +1,6 @@
+e:\Работы\СПП\lab6\ThreadPool\bin\Debug\ThreadPool.dll
+e:\Работы\СПП\lab6\ThreadPool\bin\Debug\ThreadPool.pdb
+e:\Работы\СПП\lab6\ThreadPool\obj\Debug\ThreadPool.csprojResolveAssemblyReference.cache
+e:\Работы\СПП\lab6\ThreadPool\obj\Debug\ThreadPool.csproj.CoreCompileInputs.cache
+e:\Работы\СПП\lab6\ThreadPool\obj\Debug\ThreadPool.dll
+e:\Работы\СПП\lab6\ThreadPool\obj\Debug\ThreadPool.pdb
