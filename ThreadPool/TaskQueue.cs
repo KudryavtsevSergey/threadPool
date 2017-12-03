@@ -12,7 +12,6 @@ namespace ThreadPool
     {
         private List<Task> threads;
         private PriorityQueue<int, TaskDelegate> tasks;
-        //private Queue<TaskDelegate> tasks;
         private object closeObject = new object();
         private bool isClosed = false;
         private Task additionalThread;
@@ -84,7 +83,7 @@ namespace ThreadPool
         private void CloseTasks()
         {
             for (int i = 0; i < threads.Count; i++)
-                DoEnqueueTask(null, 0);
+                DoEnqueueTask(null, 100);
 
             lock (closeObject)
             {
@@ -150,14 +149,12 @@ namespace ThreadPool
             TaskDelegate task;
             do
             {
-                Thread.Sleep(10);
                 task = DequeueTask();
                 try
                 {
                     if (task != null)
                     {
                         task();
-                        logger.LogInfo("Взята задача.");
                     }
                 }
                 catch (ThreadAbortException)

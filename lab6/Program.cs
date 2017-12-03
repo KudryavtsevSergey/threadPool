@@ -17,7 +17,6 @@ namespace lab6
 
                 var taskNumber = Interlocked.Increment(ref TaskCount);
                 Console.WriteLine(taskNumber);
-                Thread.Sleep(1000);
 
             }
             catch (Exception ex)

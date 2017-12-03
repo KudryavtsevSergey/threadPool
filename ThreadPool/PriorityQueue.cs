@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FileLogger;
 
 namespace ThreadPool
 {
     class PriorityQueue<P, V>
     {
         private SortedDictionary<P, Queue<V>> list = new SortedDictionary<P, Queue<V>>();
+
+        Logger logger = Logger.getInstance();
 
         public void Enqueue(P priority, V value)
         {
@@ -27,6 +30,7 @@ namespace ThreadPool
             var v = pair.Value.Dequeue();
             if (pair.Value.Count == 0)
                 list.Remove(pair.Key);
+            logger.LogInfo("Взята задача с приоритетом: " + pair.Key);
             return v;
         }
 
