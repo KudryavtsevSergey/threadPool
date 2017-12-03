@@ -16,13 +16,16 @@ namespace lab6
         private List<Task> threads;
         private Queue<TaskDelegate> tasks;
         private object closeObject = new object();
-        private bool isClosed;
+        private bool isClosed = false;
         private Task additionalThread;
         private Logger logger = Logger.getInstance();
+        private object syncObjectThread = new object();
 
         private int minThreadsCount = 3;
         private int maxThreadsCount;
         private int activeThreadsCount;
+        private int currentThreadsCount;
+
         private int MaxThreadsCount
         {
             get
@@ -41,8 +44,8 @@ namespace lab6
 
         public TaskQueue(int maxTaskCount)
         {
-            this.isClosed = false;
             this.MaxThreadsCount = maxTaskCount;
+            this.currentThreadsCount = minThreadsCount;
             tasks = new Queue<TaskDelegate>();
             threads = new List<Task>();
 
@@ -55,21 +58,29 @@ namespace lab6
         {
             while (!isClosed)
             {
-                if (activeThreadsCount < minThreadsCount)
+                lock (syncObjectThread)
                 {
-                    Interlocked.Increment(ref activeThreadsCount);
-                    var task = new Task(() => DoThreadWork(), TaskCreationOptions.LongRunning);
-                    threads.Add(task);
-                    task.Start();
-                    logger.LogInfo("Создан поток номер: " + activeThreadsCount);
-                }
-                else if(activeThreadsCount == minThreadsCount)
-                {
-                    logger.LogWarning("Достигнуто максимальное количество потоков.");
-                    //Monitor.Wait();
+                    if ((currentThreadsCount < maxThreadsCount) && (activeThreadsCount < currentThreadsCount))
+                    {
+                        Interlocked.Increment(ref activeThreadsCount);
+                        var task = new Task(() => DoThreadWork(), TaskCreationOptions.LongRunning);
+                        threads.Add(task);
+                        task.Start();
+                        logger.LogInfo("Создан поток номер: " + activeThreadsCount);
+                    }
+                    else
+                    {
+                        if (currentThreadsCount == maxThreadsCount)
+                        {
+                            logger.LogWarning("Достигнуто максимальное количество потоков.");
+                        }
+                        Monitor.Wait(syncObjectThread);
+                        Interlocked.Increment(ref currentThreadsCount);
+                    }
                 }
             }
             CloseTasks();
+            logger.LogInfo("Дополнительный поток завершён.");
         }
 
         private void CloseTasks()
@@ -89,7 +100,11 @@ namespace lab6
 
         public void Close()
         {
-            isClosed = true;
+            lock (syncObjectThread)
+            {
+                isClosed = true;
+                Monitor.Pulse(syncObjectThread);
+            }
             additionalThread.Wait();
         }
 
@@ -105,15 +120,8 @@ namespace lab6
         {
             lock (tasks)
             {
-                if(activeThreadsCount < maxThreadsCount)
-                {
-                    tasks.Enqueue(task);
-                    Monitor.Pulse(tasks);
-                }
-                else
-                {
-                    logger.LogWarning("");
-                }
+                tasks.Enqueue(task);
+                Monitor.Pulse(tasks);
             }
         }
 
@@ -123,6 +131,17 @@ namespace lab6
             {
                 while (tasks.Count == 0)
                     Monitor.Wait(tasks);
+                if (tasks.Count > threads.Count)
+                {
+                    lock (syncObjectThread)
+                    {
+                        if (currentThreadsCount != maxThreadsCount)
+                        {
+                            Monitor.Pulse(syncObjectThread);
+                            logger.LogInfo("Отправлен сигнал на создание нового потока.");
+                        }
+                    }
+                }
                 TaskDelegate t = tasks.Dequeue();
                 return t;
             }
@@ -158,6 +177,7 @@ namespace lab6
                 if (activeThreadsCount == 0)
                     Monitor.Pulse(closeObject);
             }
+            logger.LogInfo("Поток завершён: " + activeThreadsCount);
         }
     }
 
@@ -184,8 +204,8 @@ namespace lab6
         static void Main(string[] args)
         {
             Logger logger = Logger.getInstance();
-            var taskQueue = new TaskQueue(4);
-            for (int i = 0; i < 10; i++)
+            var taskQueue = new TaskQueue(6);
+            for (int i = 0; i < 20; i++)
             {
                 taskQueue.EnqueueTask(TestTask);
                 logger.LogInfo("Поставлена задача номер: " + i);
