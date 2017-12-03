@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using FileLogger;
 
 namespace lab6
 {
@@ -12,55 +13,60 @@ namespace lab6
 
     public class TaskQueue
     {
-        private List<Task> tasksList;
+        private List<Task> threads;
         private Queue<TaskDelegate> tasks;
-        private int activeTaskCount;
         private object closeObject = new object();
         private bool isClosed;
-        private Task additionalTask;
+        private Task additionalThread;
         private Logger logger = Logger.getInstance();
-        private int taskCount;
-        private int maxTaskCount;
-        private int MaxTaskCount
+
+        private int minThreadsCount = 3;
+        private int maxThreadsCount;
+        private int activeThreadsCount;
+        private int MaxThreadsCount
         {
             get
             {
-                return maxTaskCount;
+                return maxThreadsCount;
             }
             set
             {
-                if (taskCount >= value)
+                if (minThreadsCount >= value)
                 {
                     throw new ArgumentException("To many tasks.");
                 }
-                this.maxTaskCount = value;
+                this.maxThreadsCount = value;
             }
         }
 
         public TaskQueue(int maxTaskCount)
         {
             this.isClosed = false;
-            this.taskCount = 3;
-            this.MaxTaskCount = maxTaskCount;
+            this.MaxThreadsCount = maxTaskCount;
             tasks = new Queue<TaskDelegate>();
-            tasksList = new List<Task>();
+            threads = new List<Task>();
 
-            additionalTask = new Task(() => DoCreateThreads(), TaskCreationOptions.LongRunning);
-            additionalTask.Start();
-            Logger.getInstance().WriteLog("Дополнительный поток создан.");
+            additionalThread = new Task(() => DoCreateThreads(), TaskCreationOptions.LongRunning);
+            additionalThread.Start();
+            logger.LogInfo("Дополнительный поток создан.");
         }
 
         private void DoCreateThreads()
         {
             while (!isClosed)
             {
-                if (activeTaskCount < taskCount)
+                if (activeThreadsCount < minThreadsCount)
                 {
-                    Interlocked.Increment(ref activeTaskCount);
+                    Interlocked.Increment(ref activeThreadsCount);
                     var task = new Task(() => DoThreadWork(), TaskCreationOptions.LongRunning);
-                    tasksList.Add(task);
+                    threads.Add(task);
                     task.Start();
-                    Logger.getInstance().WriteLog("Создан поток номер" + activeTaskCount);
+                    logger.LogInfo("Создан поток номер: " + activeThreadsCount);
+                }
+                else if(activeThreadsCount == minThreadsCount)
+                {
+                    logger.LogWarning("Достигнуто максимальное количество потоков.");
+                    //Monitor.Wait();
                 }
             }
             CloseTasks();
@@ -68,23 +74,23 @@ namespace lab6
 
         private void CloseTasks()
         {
-            for (int i = 0; i < tasksList.Count; i++)
+            for (int i = 0; i < threads.Count; i++)
                 DoEnqueueTask(null);
 
             lock (closeObject)
             {
-                while (activeTaskCount > 0)
+                while (activeThreadsCount > 0)
                     Monitor.Wait(closeObject);
             }
 
-            foreach (Task task in tasksList)
+            foreach (Task task in threads)
                 task.Wait();
         }
 
         public void Close()
         {
             isClosed = true;
-            additionalTask.Wait();
+            additionalThread.Wait();
         }
 
         public void EnqueueTask(TaskDelegate task)
@@ -99,8 +105,15 @@ namespace lab6
         {
             lock (tasks)
             {
-                tasks.Enqueue(task);
-                Monitor.Pulse(tasks);
+                if(activeThreadsCount < maxThreadsCount)
+                {
+                    tasks.Enqueue(task);
+                    Monitor.Pulse(tasks);
+                }
+                else
+                {
+                    logger.LogWarning("");
+                }
             }
         }
 
@@ -124,7 +137,10 @@ namespace lab6
                 try
                 {
                     if (task != null)
+                    {
                         task();
+                        logger.LogInfo("Взята задача номер: 1");
+                    }
                 }
                 catch (ThreadAbortException)
                 {
@@ -138,38 +154,9 @@ namespace lab6
 
             lock (closeObject)
             {
-                Interlocked.Decrement(ref activeTaskCount);
-                if (activeTaskCount == 0)
+                Interlocked.Decrement(ref activeThreadsCount);
+                if (activeThreadsCount == 0)
                     Monitor.Pulse(closeObject);
-            }
-        }
-    }
-
-    class Logger
-    {
-        private static Logger instance;
-        private string test = "logger.log";
-
-        private static object syncRoot = new Object();
-
-        public static Logger getInstance()
-        {
-            if (instance == null)
-            {
-                lock (syncRoot)
-                {
-                    if (instance == null)
-                        instance = new Logger();
-                }
-            }
-            return instance;
-        }
-
-        public void WriteLog(string text)
-        {
-            using (StreamWriter writer = new StreamWriter(test, false))
-            {
-                writer.WriteLine(text);
             }
         }
     }
@@ -196,9 +183,13 @@ namespace lab6
 
         static void Main(string[] args)
         {
+            Logger logger = Logger.getInstance();
             var taskQueue = new TaskQueue(4);
             for (int i = 0; i < 10; i++)
+            {
                 taskQueue.EnqueueTask(TestTask);
+                logger.LogInfo("Поставлена задача номер: " + i);
+            }
             Console.ReadLine();
             taskQueue.Close();
         }

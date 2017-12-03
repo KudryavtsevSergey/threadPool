@@ -5,3 +5,7 @@ E:\Работы\СПП\lab6\lab6\obj\Debug\lab6.csprojResolveAssemblyReference.c
 E:\Работы\СПП\lab6\lab6\obj\Debug\lab6.csproj.CoreCompileInputs.cache
 E:\Работы\СПП\lab6\lab6\obj\Debug\lab6.exe
 E:\Работы\СПП\lab6\lab6\obj\Debug\lab6.pdb
+e:\Работы\СПП\lab6\lab6\bin\Debug\FileLogger.dll
+e:\Работы\СПП\lab6\lab6\bin\Debug\ThreadPool.dll
+e:\Работы\СПП\lab6\lab6\bin\Debug\FileLogger.pdb
+e:\Работы\СПП\lab6\lab6\bin\Debug\ThreadPool.pdb

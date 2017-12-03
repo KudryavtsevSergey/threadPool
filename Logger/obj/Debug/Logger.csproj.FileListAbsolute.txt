@@ -1,0 +1,6 @@
+E:\Работы\СПП\lab6\Logger\obj\Debug\Logger.csprojResolveAssemblyReference.cache
+E:\Работы\СПП\lab6\Logger\obj\Debug\Logger.csproj.CoreCompileInputs.cache
+E:\Работы\СПП\lab6\Logger\bin\Debug\FileLogger.dll
+E:\Работы\СПП\lab6\Logger\bin\Debug\FileLogger.pdb
+E:\Работы\СПП\lab6\Logger\obj\Debug\FileLogger.dll
+E:\Работы\СПП\lab6\Logger\obj\Debug\FileLogger.pdb
